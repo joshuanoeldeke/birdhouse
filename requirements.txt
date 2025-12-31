@@ -1,0 +1,12 @@
+blinker==1.9.0
+click==8.3.1
+Flask==3.1.2
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+numpy==1.26.4
+opencv-python-headless==4.12.0.88
+pillow==12.0.0
+psutil==7.2.1
+tflite-runtime==2.14.0
+Werkzeug==3.1.4

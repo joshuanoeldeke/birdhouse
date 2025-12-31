@@ -93,3 +93,10 @@ wget https://raw.githubusercontent.com/google-coral/test_data/master/mobilenet_v
 wget https://github.com/google-coral/test_data/raw/master/inat_bird_labels.txt -O labels.txt
 
 ```
+
+## 🚧 Current Status (MVP Phase 1)
+- [x] **Web Server:** Hosted on Flask.
+- [x] **Live Stream:** On-demand MJPEG stream via `cv2`.
+- [x] **AI Identification:** Manual upload analysis via TFLite.
+- [x] **System Monitoring:** Live dashboard for CPU/Temp/RAM.
+- [ ] **Automation:** Auto-capture photos based on motion detection. (Coming Next)
