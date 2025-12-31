@@ -1,0 +1,15 @@
+# Ignore the virtual environment (too huge)
+env/
+venv/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore the actual bird pictures (save space)
+static/captures/*
+# ...but keep the folder itself (so the app doesn't crash)
+!static/captures/.gitkeep
+
+# Ignore system files
+.DS_Store

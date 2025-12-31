@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; background: #222; color: white; text-align: center; padding-top: 20px; }
+        img { width: 100%; max-width: 640px; border: 2px solid red; border-radius: 5px; }
+        .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #555; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔴 Live Camera Feed</h1>
+    <p>Camera is active. Close this page to save battery.</p>
+    
+    <img src="{{ url_for('video_feed') }}">
+    
+    <br><br>
+    <a href="/" class="btn">← Back to Gallery (Stops Camera)</a>
+</body>
+</html>
