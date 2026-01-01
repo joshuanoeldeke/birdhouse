@@ -100,3 +100,22 @@ wget https://github.com/google-coral/test_data/raw/master/inat_bird_labels.txt -
 - [x] **AI Identification:** Manual upload analysis via TFLite.
 - [x] **System Monitoring:** Live dashboard for CPU/Temp/RAM.
 - [ ] **Automation:** Auto-capture photos based on motion detection. (Coming Next)
+
+## 🔮 Phase 2 Roadmap: The "Queue" Strategy
+To enable **Audio (BirdNET)** and **Video (TFLite)** simultaneously on the Pi Zero 2 W (512MB RAM), we will shift to an asynchronous "Producer-Consumer" architecture.
+
+### 1. The "Dumb" Watchdog (Producer)
+* **Runs:** 24/7 (Extremely lightweight).
+* **Tasks:**
+    * Streams raw live video (no AI overlay).
+    * **Video Trigger:** Detects pixel motion -> Saves raw image to \`queue/\` folder.
+    * **Audio Trigger:** Detects volume > threshold -> Saves .wav clip to \`queue/\` folder.
+
+### 2. The "Smart" Analyst (Consumer)
+* **Runs:** Background loop (Serial processing).
+* **Tasks:**
+    * Monitors \`queue/\` folder for new files.
+    * **Case A (Image):** Loads Visual AI -> Identifies -> Logs entry -> **Unloads Model**.
+    * **Case B (Audio):** Loads BirdNET -> Identifies -> Logs entry -> **Unloads Model**.
+* **Goal:** Ensures the two heavy AI models never fight for RAM at the same time.
+EOF
