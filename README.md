@@ -118,4 +118,3 @@ To enable **Audio (BirdNET)** and **Video (TFLite)** simultaneously on the Pi Ze
     * **Case A (Image):** Loads Visual AI -> Identifies -> Logs entry -> **Unloads Model**.
     * **Case B (Audio):** Loads BirdNET -> Identifies -> Logs entry -> **Unloads Model**.
 * **Goal:** Ensures the two heavy AI models never fight for RAM at the same time.
-EOF
