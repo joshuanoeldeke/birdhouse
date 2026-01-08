@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}birdhouse Pi - Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
+            <p class="text-slate-500 dark:text-slate-400">Manage your camera and AI preferences</p>
+        </div>
+        <button type="submit" form="settings-form"
+            class="bg-primary hover:bg-green-400 text-black font-bold py-2.5 px-6 rounded-lg transition-all shadow-lg hover:shadow-primary/20 flex items-center gap-2">
+            <span class="material-symbols-outlined">save</span> Save Changes
+        </button>
+    </div>
+
+    <form id="settings-form" method="POST" class="flex flex-col gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Camera Settings -->
+            <div
+                class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-6 shadow-sm flex flex-col gap-5">
+                <div class="flex items-center gap-3 border-b border-slate-100 dark:border-[#28392e] pb-4">
+                    <div
+                        class="size-10 rounded-full bg-slate-100 dark:bg-[#1c271f] text-primary flex items-center justify-center">
+                        <span class="material-symbols-outlined">videocam</span>
+                    </div>
+                    <h3 class="font-bold text-lg">Camera</h3>
+                </div>
+                <div class="space-y-4">
+                    <!-- Camera Source -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Camera Source</label>
+                        <select name="camera_index"
+                            class="w-full bg-slate-50 dark:bg-[#1c271f] border-slate-200 dark:border-[#28392e] rounded-lg text-sm focus:ring-primary focus:border-primary">
+                            {% for cam in cameras %}
+                            <option value="{{ cam.index }}" {% if settings.get('camera_index')|int==cam.index
+                                %}selected{% endif %}>
+                                {{ cam.name }}
+                            </option>
+                            {% endfor %}
+                            {% if not cameras %}
+                            <option value="0">Camera 0 (Default)</option>
+                            {% endif %}
+                        </select>
+                        <p class="text-xs text-slate-500">Requires restart on change.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Resolution</label>
+                        <select name="resolution"
+                            class="w-full bg-slate-50 dark:bg-[#1c271f] border-slate-200 dark:border-[#28392e] rounded-lg text-sm focus:ring-primary focus:border-primary">
+                            <option value="1920x1080" {% if settings.get('resolution')=='1920x1080' %}selected{% endif
+                                %}>1920 x 1080 (1080p)</option>
+                            <option value="1280x720" {% if settings.get('resolution')=='1280x720' %}selected{% endif %}>
+                                1280 x 720 (720p)</option>
+                            <option value="640x480" {% if settings.get('resolution')=='640x480' %}selected{% endif %}>
+                                640 x 480 (480p)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Framerate</label>
+                        <select name="fps"
+                            class="w-full bg-slate-50 dark:bg-[#1c271f] border-slate-200 dark:border-[#28392e] rounded-lg text-sm focus:ring-primary focus:border-primary">
+                            <option value="60" {% if settings.get('fps')=='60' %}selected{% endif %}>60 FPS</option>
+                            <option value="30" {% if settings.get('fps')=='30' %}selected{% endif %}>30 FPS</option>
+                            <option value="24" {% if settings.get('fps')=='24' %}selected{% endif %}>24 FPS</option>
+                            <option value="15" {% if settings.get('fps')=='15' %}selected{% endif %}>15 FPS</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between pt-2">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium">Night Mode</span>
+                            <span class="text-xs text-slate-500">Increase exposure in low light</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="night_mode" value="true" class="sr-only peer" {% if
+                                settings.get('night_mode')=='true' %}checked{% endif %}>
+                            <div
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-[#1c271f] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Settings -->
+            <div
+                class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-6 shadow-sm flex flex-col gap-5">
+                <div class="flex items-center gap-3 border-b border-slate-100 dark:border-[#28392e] pb-4">
+                    <div
+                        class="size-10 rounded-full bg-slate-100 dark:bg-[#1c271f] text-primary flex items-center justify-center">
+                        <span class="material-symbols-outlined">smart_toy</span>
+                    </div>
+                    <h3 class="font-bold text-lg">AI Analysis</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Motion
+                                Sensitivity</label>
+                            <span class="text-xs font-mono text-primary">{{ settings.get('sensitivity', 70) }}%</span>
+                        </div>
+                        <input name="sensitivity" type="range" min="0" max="100"
+                            value="{{ settings.get('sensitivity', 70) }}"
+                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-[#1c271f] accent-primary">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Model Selection</label>
+                        <select name="model_file"
+                            class="w-full bg-slate-50 dark:bg-[#1c271f] border-slate-200 dark:border-[#28392e] rounded-lg text-sm focus:ring-primary focus:border-primary">
+                            {% for model in models %}
+                            <option value="{{ model }}" {% if settings.get('model_file')==model %}selected{% endif %}>{{
+                                model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Audio Analysis (Placeholder UI but saves preference) -->
+                    <div class="space-y-4 border-t border-slate-100 dark:border-[#28392e] pt-4">
+                        <label
+                            class="text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider block">Audio
+                            Analysis (BirdNET)</label>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium">Enable Analysis</span>
+                                <span class="text-xs text-slate-500">Identify species by song</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="enable_audio" value="true" class="sr-only peer" {% if
+                                    settings.get('enable_audio')=='true' %}checked{% endif %}>
+                                <div
+                                    class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-[#1c271f] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div
+                class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-6 shadow-sm flex flex-col gap-5 lg:col-span-2">
+                <div class="flex items-center gap-3 border-b border-slate-100 dark:border-[#28392e] pb-4">
+                    <div
+                        class="size-10 rounded-full bg-slate-100 dark:bg-[#1c271f] text-primary flex items-center justify-center">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </div>
+                    <h3 class="font-bold text-lg">Notifications</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium">Push Notifications</span>
+                                <span class="text-xs text-slate-500">Send alerts on detection</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="push_notifications" value="true" class="sr-only peer" {% if
+                                    settings.get('push_notifications')=='true' %}checked{% endif %}>
+                                <div
+                                    class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-[#1c271f] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Notification
+                                Cooldown</label>
+                            <select name="cooldown"
+                                class="w-full bg-slate-50 dark:bg-[#1c271f] border-slate-200 dark:border-[#28392e] rounded-lg text-sm focus:ring-primary focus:border-primary">
+                                <option value="0" {% if settings.get('cooldown')=='0' %}selected{% endif %}>No cooldown
+                                </option>
+                                <option value="5" {% if settings.get('cooldown')=='5' %}selected{% endif %}>5 minutes
+                                </option>
+                                <option value="15" {% if settings.get('cooldown')=='15' %}selected{% endif %}>15 minutes
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Discord Webhook</label>
+                        <input name="discord_webhook" type="password" value="{{ settings.get('discord_webhook', '') }}"
+                            class="w-full bg-slate-50 dark:bg-[#1c271f] border-slate-200 dark:border-[#28392e] rounded-lg text-sm focus:ring-primary focus:border-primary placeholder:text-slate-600"
+                            placeholder="https://discord.com/api/webhooks/...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

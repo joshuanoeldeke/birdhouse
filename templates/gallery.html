@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}birdhouse Pi - Gallery{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    <aside class="w-full lg:w-72 flex-shrink-0 space-y-8 lg:border-r border-slate-200 dark:border-[#28392e] lg:pr-8">
+        <form action="{{ url_for('gallery') }}" method="get" id="filterForm">
+            <div class="space-y-6">
+                <!-- Search -->
+                <div class="space-y-3">
+                    <label
+                        class="text-sm font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Search</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                        <input name="search" value="{{ request.args.get('search', '') }}" list="species-list"
+                            class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#1c271f] border border-slate-200 dark:border-[#28392e] rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder-slate-400 shadow-sm"
+                            placeholder="Search species..." type="text" />
+                        <datalist id="species-list">
+                            {% for species in all_species %}
+                            <option value="{{ species }}">
+                                {% endfor %}
+                        </datalist>
+                    </div>
+                </div>
+
+                <!-- Media Type (Mock) -->
+                <div class="space-y-3">
+                    <label class="text-sm font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Media
+                        Type</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input checked disabled type="checkbox"
+                                class="rounded border-slate-300 text-primary bg-slate-100" />
+                            <span class="text-sm text-slate-700 dark:text-slate-300">Images</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group opacity-50"
+                            title="Not available yet">
+                            <input disabled type="checkbox" class="rounded border-slate-300" />
+                            <span class="text-sm text-slate-700 dark:text-slate-300">Videos</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="space-y-3">
+                    <label class="text-sm font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Date
+                        Range</label>
+                    <select name="date_filter" onchange="this.form.submit()"
+                        class="w-full appearance-none px-3 py-2.5 bg-white dark:bg-[#1c271f] border border-slate-200 dark:border-[#28392e] rounded-lg text-sm text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-primary focus:border-primary outline-none cursor-pointer">
+                        <option value="">All Time</option>
+                        <option value="today" {% if request.args.get('date_filter')=='today' %}selected{% endif %}>Today
+                        </option>
+                        <option value="week" {% if request.args.get('date_filter')=='week' %}selected{% endif %}>Last 7
+                            Days</option>
+                        <option value="month" {% if request.args.get('date_filter')=='month' %}selected{% endif %}>Last
+                            30 Days</option>
+                    </select>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-primary text-black font-bold py-2 rounded-lg hover:bg-green-400 transition-colors">Apply
+                    Filters</button>
+                <a href="{{ url_for('gallery') }}"
+                    class="block text-center text-xs text-slate-500 hover:text-primary mt-2">Clear Filters</a>
+            </div>
+        </form>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">Gallery <span class="text-slate-400 font-normal ml-2">({{ captures.total }}
+                    items)</span></h2>
+        </div>
+
+        {% if captures.items %}
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {% for capture in captures.items %}
+            <div onclick="openLightbox('{{ url_for('static', filename='captures/' + capture.filename) }}', '{{ capture.species }}', '{{ capture.timestamp.strftime('%Y-%m-%d %H:%M') }}')"
+                class="group relative aspect-square bg-slate-100 dark:bg-[#1c271f] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-lg transition-all border border-slate-200 dark:border-[#28392e]">
+                <img src="{{ url_for('static', filename='captures/' + capture.filename) }}" loading="lazy"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    alt="{{ capture.species }}">
+                <div
+                    class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end">
+                    <span class="text-white font-bold text-sm">{{ capture.species }}</span>
+                    <span class="text-white/70 text-xs font-mono">{{ capture.timestamp.strftime('%Y-%m-%d %H:%M')
+                        }}</span>
+                    <span class="text-green-400 text-[10px]">{{ (capture.confidence * 100)|int }}% Conf.</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-8 flex justify-center gap-2">
+            {% if captures.has_prev %}
+            <a href="{{ url_for('gallery', page=captures.prev_num, search=request.args.get('search'), date_filter=request.args.get('date_filter')) }}"
+                class="px-4 py-2 bg-white dark:bg-[#1c271f] border border-slate-200 dark:border-[#28392e] rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-[#28392e]">Previous</a>
+            {% endif %}
+
+            <span class="px-4 py-2 text-sm text-slate-500">Page {{ captures.page }} of {{ captures.pages }}</span>
+
+            {% if captures.has_next %}
+            <a href="{{ url_for('gallery', page=captures.next_num, search=request.args.get('search'), date_filter=request.args.get('date_filter')) }}"
+                class="px-4 py-2 bg-white dark:bg-[#1c271f] border border-slate-200 dark:border-[#28392e] rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-[#28392e]">Next</a>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="flex flex-col items-center justify-center p-12 text-slate-500">
+            <span class="material-symbols-outlined text-4xl mb-2">image_not_supported</span>
+            <p>No captures found matching your filters.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Lightbox Modal -->
+<div id="lightbox" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+    onclick="closeLightbox(event)">
+    <div class="relative max-w-7xl w-full max-h-screen flex flex-col items-center gap-4">
+        <!-- Close Button -->
+        <button onclick="closeLightbox(event, true)"
+            class="absolute -top-12 right-0 text-white hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-4xl">close</span>
+        </button>
+
+        <!-- Image Container -->
+        <div class="relative w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                onclick="event.stopPropagation()">
+        </div>
+
+        <!-- Info & Controls -->
+        <div class="w-full bg-white/10 backdrop-blur-md rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between text-white gap-4"
+            onclick="event.stopPropagation()">
+            <div>
+                <h3 id="lightbox-species" class="text-xl font-bold"></h3>
+                <p id="lightbox-date" class="text-sm text-gray-300 font-mono"></p>
+            </div>
+            <a id="lightbox-download" href="#" download
+                class="bg-primary text-black font-bold py-2 px-6 rounded-lg hover:bg-green-400 transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined">download</span> Download
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openLightbox(url, species, date) {
+        const modal = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        const title = document.getElementById('lightbox-species');
+        const dateEl = document.getElementById('lightbox-date');
+        const downloadBtn = document.getElementById('lightbox-download');
+
+        img.src = url;
+        title.textContent = species;
+        dateEl.textContent = date;
+        downloadBtn.href = url;
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closeLightbox(event, force) {
+        if (force || event.target.id === 'lightbox') {
+            const modal = document.getElementById('lightbox');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+
+            // Clear src to stop video/large image from memory if needed (optional)
+            document.getElementById('lightbox-img').src = '';
+        }
+    }
+
+    // Close on Escape
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            closeLightbox(event, true);
+        }
+    });
+</script>
+{% endblock %}

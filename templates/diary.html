@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}birdhouse Pi - Diary{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    <div class="flex-1 min-w-0">
+        <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">menu_book</span> Diary & Timeline
+        </h2>
+
+        <!-- New Entry Form -->
+        <div
+            class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-5 shadow-sm mb-8">
+            <form method="POST" action="{{ url_for('diary') }}">
+                <input name="title"
+                    class="w-full text-lg font-bold bg-transparent border-none focus:ring-0 placeholder-slate-400 text-slate-900 dark:text-white mb-2"
+                    placeholder="Title your entry..." required />
+                <textarea name="content"
+                    class="w-full bg-slate-50 dark:bg-[#1c271f] border border-slate-200 dark:border-[#28392e] rounded-lg p-3 text-sm focus:ring-primary focus:border-primary min-h-[100px]"
+                    placeholder="What did you observe today?" required></textarea>
+                <div class="flex justify-end mt-3">
+                    <button type="submit"
+                        class="bg-primary hover:bg-green-400 text-black font-bold py-2 px-6 rounded-lg transition-colors text-sm">Post
+                        Entry</button>
+                </div>
+            </form>
+        </div>
+
+        <div
+            class="space-y-8 relative before:absolute before:left-4 before:top-0 before:bottom-0 before:w-0.5 before:bg-slate-200 dark:before:bg-[#28392e]">
+
+            {# Combined list of Entries and Captures (Mock sorting for now, ideally backend does this) #}
+            {% for entry in entries %}
+            <div class="relative pl-12 group">
+                <div
+                    class="absolute left-0 size-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center border-4 border-white dark:border-[#101915] shadow-sm">
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                </div>
+                <div
+                    class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-5 shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg">{{ entry.title }}</h3>
+                        <span class="text-xs text-slate-400">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 mb-3">{{ entry.content }}</p>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% for capture in captures %}
+            <div class="relative pl-12 group">
+                <div
+                    class="absolute left-0 size-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center border-4 border-white dark:border-[#101915] shadow-sm">
+                    <span class="material-symbols-outlined text-sm">photo_camera</span>
+                </div>
+                <div
+                    class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-5 shadow-sm">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div onclick="openLightbox('{{ url_for('static', filename='captures/' + capture.filename) }}', '{{ capture.species }}', '{{ capture.timestamp.strftime('%Y-%m-%d %H:%M') }}')"
+                            class="size-24 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 cursor-pointer hover:opacity-90 transition-opacity">
+                            <img src="{{ url_for('static', filename='captures/' + capture.filename) }}"
+                                class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-bold text-lg">{{ capture.species }}</span>
+                                <span
+                                    class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full font-bold">Detected</span>
+                            </div>
+                            <p class="text-sm text-slate-500 mb-2">Confidence: {{ (capture.confidence * 100)|int }}%</p>
+                            <span class="text-xs text-slate-400">{{ capture.timestamp.strftime('%Y-%m-%d %H:%M')
+                                }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if not entries and not captures %}
+            <div class="pl-12 py-8 text-slate-500">
+                No entries yet. Start by writing something or wait for a bird!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Sidebar -->
+    <div class="w-full lg:w-80 flex flex-col gap-6">
+        <div
+            class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-5 shadow-sm sticky top-24">
+            <h3
+                class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">bar_chart</span> Stats Overview
+            </h3>
+            <div class="space-y-4">
+                <div class="p-3 bg-slate-50 dark:bg-[#1c271f] rounded-lg border border-slate-100 dark:border-[#28392e]">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">This Week</div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-slate-900 dark:text-white">{{ dashboard_stats.weekly_visits
+                            }}</span>
+                        <span class="text-sm text-green-500 font-medium flex items-center text-xs">
+                            Visits
+                        </span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase">Top Species</h4>
+                    {% if dashboard_stats.species_breakdown %}
+                    {% for species in dashboard_stats.species_breakdown %}
+                    <div>
+                        <div class="flex items-center justify-between text-sm mb-1">
+                            <span class="flex items-center gap-2">
+                                <span
+                                    class="size-2 rounded-full 
+                                        {% if loop.index == 1 %}bg-blue-500{% elif loop.index == 2 %}bg-amber-500{% else %}bg-red-500{% endif %}">
+                                </span>
+                                {{ species.species }}
+                            </span>
+                            <span class="font-bold">{{ species.percentage }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+                            <div class="h-1.5 rounded-full 
+                                    {% if loop.index == 1 %}bg-blue-500{% elif loop.index == 2 %}bg-amber-500{% else %}bg-red-500{% endif %}"
+                                style="width: {{ species.percentage }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-xs text-slate-500 italic">Not enough data for breakdown.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox Modal -->
+<div id="lightbox" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+    onclick="closeLightbox(event)">
+    <div class="relative max-w-7xl w-full max-h-screen flex flex-col items-center gap-4">
+        <!-- Close Button -->
+        <button onclick="closeLightbox(event, true)"
+            class="absolute -top-12 right-0 text-white hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-4xl">close</span>
+        </button>
+
+        <!-- Image Container -->
+        <div class="relative w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                onclick="event.stopPropagation()">
+        </div>
+
+        <!-- Info & Controls -->
+        <div class="w-full bg-white/10 backdrop-blur-md rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between text-white gap-4"
+            onclick="event.stopPropagation()">
+            <div>
+                <h3 id="lightbox-species" class="text-xl font-bold"></h3>
+                <p id="lightbox-date" class="text-sm text-gray-300 font-mono"></p>
+            </div>
+            <a id="lightbox-download" href="#" download
+                class="bg-primary text-black font-bold py-2 px-6 rounded-lg hover:bg-green-400 transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined">download</span> Download
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openLightbox(url, species, date) {
+        const modal = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        const title = document.getElementById('lightbox-species');
+        const dateEl = document.getElementById('lightbox-date');
+        const downloadBtn = document.getElementById('lightbox-download');
+
+        img.src = url;
+        title.textContent = species;
+        dateEl.textContent = date;
+        downloadBtn.href = url;
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closeLightbox(event, force) {
+        if (force || event.target.id === 'lightbox') {
+            const modal = document.getElementById('lightbox');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+
+            // Clear src
+            document.getElementById('lightbox-img').src = '';
+        }
+    }
+
+    // Close on Escape
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            closeLightbox(event, true);
+        }
+    });
+</script>
+{% endblock %}

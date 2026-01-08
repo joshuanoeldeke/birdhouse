@@ -1,58 +1,155 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dad's Birdhouse</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: sans-serif; background: #f4f4f9; text-align: center; color: #333; max-width: 800px; margin: 0 auto; padding: 10px; }
-        
-        /* Navigation Buttons */
-        .nav-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white;}
-        .btn-live { background: #e74c3c; } /* Red for Live */
-        .btn-admin { background: #34495e; } /* Blue/Grey for Admin */
-        .btn-upload { background: #27ae60; border: none; cursor: pointer; color: white; padding: 10px;}
+{% extends "base.html" %}
 
-        /* Gallery */
-        .gallery { display: flex; flex-wrap: wrap; justify-content: center; }
-        .card { background: white; padding: 5px; margin: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 45%; max-width: 200px; }
-        img { width: 100%; border-radius: 5px; }
-        h3 { font-size: 0.8em; margin: 5px 0; overflow-wrap: break-word; }
-        
-        .prediction-banner { background: #dff9fb; padding: 10px; border: 2px solid #27ae60; border-radius: 5px; margin-bottom: 20px;}
-    </style>
-</head>
-<body>
-    <h1>🐦 Smart Birdhouse</h1>
-
-    <div class="nav-bar">
-        <a href="/live" class="btn btn-live">🔴 Watch Live</a>
-        <a href="/admin" class="btn btn-admin">⚙️ Status</a>
-    </div>
-
-    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <form method="post" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*" required>
-            <button class="btn-upload" type="submit">Identify Bird</button>
-        </form>
-    </div>
-
-    {% if prediction %}
-    <div class="prediction-banner">
-        <strong>Result:</strong> {{ prediction }}
-    </div>
-    {% endif %}
-
-    <hr>
-    
-    <h2>Recent Visitors</h2>
-    <div class="gallery">
-        {% for image in images %}
-        <div class="card">
-            <img src="{{ url_for('static', filename='captures/' + image) }}">
-            <h3>{{ image }}</h3>
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-6">
+    <div class="flex-1 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold tracking-tight">Live Camera Feed</h1>
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-3 w-3">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                </span>
+                <span class="text-sm font-medium text-primary tracking-wider">ONLINE</span>
+            </div>
         </div>
-        {% endfor %}
+        <div id="live-feed-container"
+            class="relative w-full aspect-square bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-[#28392e] group">
+            <img src="{{ url_for('video_feed') }}" class="absolute inset-0 w-full h-full object-cover" alt="Live Stream"
+                onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'flex flex-col items-center justify-center h-full text-slate-500\'><span class=\'material-symbols-outlined text-6xl mb-4\'>videocam_off</span><span class=\'text-lg font-medium\'>Camera Offline</span></div>';" />
+
+            <div
+                class="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg text-white text-xs font-mono flex items-center gap-2">
+                <span class="size-2 rounded-full bg-red-500 animate-pulse"></span>
+                LIVE
+            </div>
+            <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                <button onclick="toggleFullscreen()"
+                    class="bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white hover:text-slate-900 transition-colors shadow-lg"
+                    title="Fullscreen">
+                    <span class="material-symbols-outlined text-[20px]">fullscreen</span>
+                </button>
+                <button onclick="captureImage()"
+                    class="bg-white text-slate-900 p-2 rounded-lg hover:bg-primary hover:text-white transition-colors shadow-lg"
+                    title="Take Snapshot">
+                    <span class="material-symbols-outlined text-[20px]">camera_alt</span>
+                </button>
+                <a href="{{ url_for('settings') }}"
+                    class="bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white hover:text-slate-900 transition-colors shadow-lg"
+                    title="Camera Settings">
+                    <span class="material-symbols-outlined text-[20px]">settings</span>
+                </a>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+
+    <div class="w-full lg:w-96 flex flex-col gap-6">
+        <!-- System Health -->
+        <div class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-6 shadow-sm">
+            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">ssid_chart</span> System Health
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-50 dark:bg-[#1c271f] p-4 rounded-lg border border-slate-100 dark:border-[#28392e]">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">CPU Temp</div>
+                    <div class="text-2xl font-mono font-bold">{{ stats.temperature }}°C</div>
+                    <div class="w-full bg-slate-200 dark:bg-[#28392e] h-1 mt-2 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full" style="width: {{ stats.cpu_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-[#1c271f] p-4 rounded-lg border border-slate-100 dark:border-[#28392e]">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Disk Usage</div>
+                    <div class="text-2xl font-mono font-bold">{{ stats.disk_percent }}%</div>
+                    <div class="w-full bg-slate-200 dark:bg-[#28392e] h-1 mt-2 rounded-full overflow-hidden">
+                        <div class="bg-amber-500 h-full" style="width: {{ stats.disk_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-[#1c271f] p-4 rounded-lg border border-slate-100 dark:border-[#28392e]">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Memory</div>
+                    <div class="text-2xl font-mono font-bold">{{ stats.memory_percent }}%</div>
+                    <div class="w-full bg-slate-200 dark:bg-[#28392e] h-1 mt-2 rounded-full overflow-hidden">
+                        <div class="bg-blue-500 h-full" style="width: {{ stats.memory_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-[#1c271f] p-4 rounded-lg border border-slate-100 dark:border-[#28392e]">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">CPU Load</div>
+                    <div class="text-2xl font-mono font-bold">{{ stats.cpu_percent }}%</div>
+                    <div class="w-full bg-slate-200 dark:bg-[#28392e] h-1 mt-2 rounded-full overflow-hidden">
+                        <div class="bg-purple-500 h-full" style="width: {{ stats.cpu_percent }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Events -->
+        <div
+            class="bg-white dark:bg-[#111813] border border-slate-200 dark:border-[#28392e] rounded-xl p-6 shadow-sm flex-1">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">history</span> Recent Events
+                </h3>
+                <a href="{{ url_for('gallery') }}" class="text-xs font-bold text-primary hover:underline">VIEW ALL</a>
+            </div>
+            <div class="space-y-4">
+                {% for capture in recent_captures %}
+                <div
+                    class="flex gap-4 p-3 hover:bg-slate-50 dark:hover:bg-[#1c271f] rounded-lg transition-colors group cursor-pointer border border-transparent hover:border-slate-100 dark:hover:border-[#28392e]">
+                    <div
+                        class="size-16 rounded-lg bg-slate-100 dark:bg-[#1c271f] overflow-hidden flex-shrink-0 relative">
+                        <img src="{{ url_for('static', filename='captures/' + capture.filename) }}"
+                            class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-sm truncate">{{ capture.species }}</h4>
+                            <span
+                                class="text-[10px] bg-slate-100 dark:bg-[#28392e] px-1.5 py-0.5 rounded text-slate-500 font-mono">{{
+                                capture.timestamp.strftime('%H:%M') }}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                            <span class="size-1.5 rounded-full bg-green-500"></span>
+                            Confidence: {{ (capture.confidence * 100)|round|int }}%
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-slate-500 text-sm">
+                    No recent events.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function captureImage() {
+        try {
+            const response = await fetch('/api/capture', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                // Reload to show new capture in recent events
+                window.location.reload();
+            } else {
+                alert('Capture failed: ' + data.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error taking snapshot');
+        }
+    }
+
+    function toggleFullscreen() {
+        const elem = document.getElementById('live-feed-container');
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+</script>
+{% endblock %}

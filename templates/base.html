@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>{% block title %}birdhouse Pi{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display text-slate-900 dark:text-white transition-colors duration-200">
+    <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#28392e] px-4 lg:px-10 py-3 bg-white dark:bg-[#111813] sticky top-0 z-50">
+        <a href="{{ url_for('index') }}" class="flex items-center gap-4 group">
+            <div
+                class="size-8 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-3xl">nest_cam_iq_outdoor</span>
+            </div>
+            <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">birdhouse Pi</h2>
+        </a>
+        <div class="flex flex-1 justify-end gap-8">
+            <nav class="hidden md:flex items-center gap-2">
+                {% set nav_classes = "px-4 py-2 rounded-lg text-sm font-medium transition-all" %}
+                {% set active_classes = "bg-primary/10 text-primary font-bold" %}
+                {% set inactive_classes = "text-slate-500 hover:text-primary hover:bg-slate-50 dark:hover:bg-[#1c271f]"
+                %}
+
+                <a href="{{ url_for('index') }}"
+                    class="{{ nav_classes }} {% if request.endpoint == 'index' %}{{ active_classes }}{% else %}{{ inactive_classes }}{% endif %}">Dashboard</a>
+                <a href="{{ url_for('gallery') }}"
+                    class="{{ nav_classes }} {% if request.endpoint == 'gallery' %}{{ active_classes }}{% else %}{{ inactive_classes }}{% endif %}">Gallery</a>
+                <a href="{{ url_for('diary') }}"
+                    class="{{ nav_classes }} {% if request.endpoint == 'diary' %}{{ active_classes }}{% else %}{{ inactive_classes }}{% endif %}">Diary</a>
+                <a href="{{ url_for('settings') }}"
+                    class="{{ nav_classes }} {% if request.endpoint == 'settings' %}{{ active_classes }}{% else %}{{ inactive_classes }}{% endif %}">Settings</a>
+            </nav>
+            <div class="flex gap-2">
+                <div class="flex items-center justify-center rounded-lg h-10 bg-slate-100 dark:bg-[#28392e] text-slate-900 dark:text-white gap-2 text-sm font-bold px-3"
+                    title="WiFi Signal">
+                    <span class="material-symbols-outlined text-[20px]">wifi</span>
+                    <span class="text-xs font-mono">{{ stats.wifi_signal if stats and stats.wifi_signal else 'N/A'
+                        }}</span>
+                </div>
+                <div class="flex items-center justify-center rounded-lg h-10 bg-slate-100 dark:bg-[#28392e] text-slate-900 dark:text-white gap-2 text-sm font-bold px-3"
+                    title="Free Storage">
+                    <span class="material-symbols-outlined text-[20px]">sd_storage</span>
+                    <span class="text-xs font-mono">{{ stats.disk_free if stats and stats.disk_free else '0GB' }}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-[1440px] mx-auto p-4 lg:p-8 flex flex-col gap-6">
+        {# Flash Messages #}
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="p-4 bg-primary/10 text-primary-dark border border-primary/20 rounded-lg shadow-sm">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>
